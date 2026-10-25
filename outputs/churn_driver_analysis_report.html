@@ -1,0 +1,530 @@
+<title>Churn Driver Analysis</title>
+<style>
+  :root {
+    --bg: #f5f5f2;
+    --surface: #ffffff;
+    --surface-2: #eef0ee;
+    --ink: #14151a;
+    --ink-secondary: #4c4e58;
+    --muted: #83858f;
+    --border: rgba(20,21,26,0.11);
+    --border-strong: rgba(20,21,26,0.20);
+    --accent: #2a6fce;
+    --accent-ink: #ffffff;
+    --accent-soft: #e7eefb;
+    --accent-soft-border: rgba(42,111,206,0.28);
+    --tag-neutral-bg: #eef0ee;
+    --tag-neutral-ink: #63656e;
+    --code-bg: #eef0ee;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101114;
+      --surface: #17181d;
+      --surface-2: #1c1e24;
+      --ink: #f2f2ef;
+      --ink-secondary: #c2c4cf;
+      --muted: #8b8d99;
+      --border: rgba(255,255,255,0.10);
+      --border-strong: rgba(255,255,255,0.18);
+      --accent: #5b9aed;
+      --accent-ink: #0b1220;
+      --accent-soft: rgba(91,154,237,0.14);
+      --accent-soft-border: rgba(91,154,237,0.35);
+      --tag-neutral-bg: #1c1e24;
+      --tag-neutral-ink: #9497a3;
+      --code-bg: #1c1e24;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #101114;
+    --surface: #17181d;
+    --surface-2: #1c1e24;
+    --ink: #f2f2ef;
+    --ink-secondary: #c2c4cf;
+    --muted: #8b8d99;
+    --border: rgba(255,255,255,0.10);
+    --border-strong: rgba(255,255,255,0.18);
+    --accent: #5b9aed;
+    --accent-ink: #0b1220;
+    --accent-soft: rgba(91,154,237,0.14);
+    --accent-soft-border: rgba(91,154,237,0.35);
+    --tag-neutral-bg: #1c1e24;
+    --tag-neutral-ink: #9497a3;
+    --code-bg: #1c1e24;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 64px 28px 96px;
+  }
+
+  h1, h2, h3 {
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-weight: 600;
+    text-wrap: balance;
+    margin: 0;
+    color: var(--ink);
+  }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 14px;
+  }
+
+  header.hero {
+    padding-bottom: 40px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 48px;
+  }
+  header.hero h1 {
+    font-size: 40px;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+  header.hero p.dek {
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--ink-secondary);
+    margin: 18px 0 0;
+  }
+  .meta-row {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+  .meta-row span b { color: var(--ink-secondary); font-weight: 500; }
+
+  section.block { margin-bottom: 56px; }
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .section-num {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    color: var(--accent);
+    border: 1px solid var(--accent-soft-border);
+    background: var(--accent-soft);
+    border-radius: 5px;
+    padding: 3px 8px;
+    flex-shrink: 0;
+  }
+  .section-head h2 {
+    font-size: 23px;
+  }
+
+  p { line-height: 1.65; color: var(--ink-secondary); font-size: 15.5px; }
+  p.lede { color: var(--ink); font-size: 16px; }
+  strong { color: var(--ink); font-weight: 600; }
+  code {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.88em;
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: var(--ink);
+  }
+
+  ul.decision-list { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+  ul.decision-list li {
+    position: relative;
+    padding-left: 22px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink-secondary);
+  }
+  ul.decision-list li::before {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 7px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  ul.decision-list li b { color: var(--ink); font-weight: 600; }
+
+  .callout {
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-soft-border);
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin: 20px 0;
+  }
+  .callout p { color: var(--ink); margin: 0; max-width: none; }
+  .callout p + p { margin-top: 10px; }
+
+  /* category cards */
+  .category {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 18px;
+  }
+  .category-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .category-head h3 { font-size: 17px; }
+  .category-verdict {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .category-cols { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--muted); margin: 2px 0 14px; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  .table-wrap { overflow-x: auto; }
+  th {
+    text-align: left;
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border-strong);
+    white-space: nowrap;
+  }
+  td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--ink-secondary);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  td.factor { color: var(--ink); font-weight: 500; font-variant-numeric: normal; white-space: normal; }
+  td.num, th.num { text-align: right; }
+  tr:last-child td { border-bottom: none; }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.03em;
+    padding: 2px 7px;
+    border-radius: 5px;
+  }
+  .tag.sig { background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-soft-border); }
+  .tag.ns { background: var(--tag-neutral-bg); color: var(--tag-neutral-ink); }
+
+  /* chart */
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 26px 28px 20px;
+  }
+  .chart-title { font-size: 13.5px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+  .chart-sub { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); margin-bottom: 18px; }
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+  }
+  @media (max-width: 640px) {
+    .chart-grid { grid-template-columns: 1fr; }
+  }
+  .panel-label {
+    font-size: 12px;
+    color: var(--ink-secondary);
+    font-weight: 500;
+    margin-bottom: 14px;
+  }
+  .bar-row {
+    display: grid;
+    grid-template-columns: 158px 1fr 64px;
+    align-items: center;
+    gap: 10px;
+    height: 30px;
+  }
+  .bar-row .label { font-size: 12px; color: var(--ink); font-family: "IBM Plex Mono", monospace; text-align: right; }
+  .bar-track {
+    position: relative;
+    height: 18px;
+    background: transparent;
+  }
+  .bar-track .zero {
+    position: absolute;
+    top: -6px; bottom: -6px;
+    width: 1px;
+    background: var(--border-strong);
+  }
+  .bar-track .fill {
+    position: absolute;
+    top: 0; height: 18px;
+    border-radius: 4px;
+    background: var(--accent);
+    transition: filter 0.15s ease;
+  }
+  .bar-row:hover .fill { filter: brightness(1.08); }
+  .bar-track .fill.left { border-radius: 0 4px 4px 0; }
+  .bar-track .fill.right { border-radius: 4px 0 0 4px; }
+  .bar-row .value { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--ink-secondary); }
+  .p05-line {
+    position: absolute;
+    top: 0; height: 150px;
+    width: 1px;
+    border-left: 1px dashed var(--muted);
+    z-index: 1;
+  }
+  .p05-label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    color: var(--muted);
+    position: absolute;
+    top: -14px;
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+  .chart-foot {
+    margin-top: 22px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .drivers-list { display: flex; flex-direction: column; gap: 2px; margin-top: 18px; }
+  .driver-item {
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 4px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .driver-item:last-child { border-bottom: none; }
+  .driver-rank { font-family: "IBM Plex Mono", monospace; color: var(--muted); font-size: 12px; }
+  .driver-item b { color: var(--ink); font-weight: 600; }
+  .driver-item span.desc { color: var(--ink-secondary); font-size: 13px; }
+  .driver-item .metric { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: var(--accent); text-align: right; }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 12.5px;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-family: "IBM Plex Mono", monospace;
+  }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<div class="page">
+
+  <header class="hero">
+    <p class="eyebrow">Phase 6 &middot; Final report</p>
+    <h1>What actually predicts churn</h1>
+    <p class="dek">A synthetic 10,000-customer dataset was screened across five feature categories &mdash; profile, product usage, billing, support, and engagement &mdash; to find which factors separate churned customers from retained ones. This report documents the cleaning decisions, the per-category test results, and what's out of scope until a multivariate model is built.</p>
+    <div class="meta-row">
+      <span>Rows <b>10,000</b></span>
+      <span>Overall churn rate <b>10.21%</b></span>
+      <span>Churned / retained <b>1,021 / 8,979</b></span>
+      <span>Test <b>Welch's t-test / &chi;&sup2;, &alpha; = 0.05</b></span>
+    </div>
+  </header>
+
+  <section class="block">
+    <div class="section-head"><span class="section-num">01</span><h2>Cleaning decisions</h2></div>
+    <p class="lede">The raw file (32 columns) was left untouched. All cleaning landed in a separate <code>_cleaned.csv</code> as additive columns &mdash; nothing was overwritten, imputed in place, or dropped.</p>
+    <ul class="decision-list">
+      <li><b>Range checks passed with zero violations.</b> <code>nps_score</code> (&minus;100&ndash;100), <code>csat_score</code> (1&ndash;5, whole values only despite being stored as float), and <code>age</code> (18&ndash;74, inside the requested 10&ndash;100) all fell cleanly inside range with no sentinel or placeholder values.</li>
+      <li><b>No duplication.</b> All 10,000 <code>customer_id</code> values are unique; no fully duplicate rows.</li>
+      <li><b>Text-coded booleans confirmed clean.</b> <code>discount_applied</code>, <code>price_increase_last_3m</code>, and <code>survey_response</code> use consistent Yes/No or category labels &mdash; no case, whitespace, or near-duplicate variants.</li>
+      <li><b><code>complaint_type_clean</code> added.</b> A copy of <code>complaint_type</code> with its 2,045 missing values (20.45%) labeled <code>"Unknown"</code>. The original <code>complaint_type</code> column is untouched.</li>
+      <li><b>Two mismatch flags added, not resolved.</b> Investigation showed complaint_type's missingness doesn't cleanly mean "no support contact": <code>complaint_missing_with_tickets</code> flags 1,402 rows where the type is missing but &ge;1 ticket was logged; <code>complaint_present_no_tickets</code> flags 2,369 rows with a recorded type but zero tickets. Both are boolean columns, left for downstream analysis to interpret rather than resolved by assumption.</li>
+    </ul>
+  </section>
+
+  <section class="block">
+    <div class="section-head"><span class="section-num">02</span><h2>Churn drivers by category</h2></div>
+    <p class="lede">For each category, numeric columns were compared by group mean (Welch's t-test); categorical columns by churn rate spread across groups (&chi;&sup2; test of independence). Only 5 of 24 factors tested clear <code>p &lt; 0.05</code>.</p>
+
+    <div class="category">
+      <div class="category-head"><h3>Customer Profile</h3><span class="category-verdict">1 of 8 significant</span></div>
+      <div class="category-cols">age &middot; gender &middot; location &middot; customer_segment &middot; signup_channel &middot; tenure_months &middot; contract_type</div>
+      <div class="table-wrap">
+      <table>
+        <tr><th>Factor</th><th class="num">Churned</th><th class="num">Retained</th><th class="num">Difference</th><th class="num">p-value</th><th>Result</th></tr>
+        <tr><td class="factor">tenure_months</td><td class="num">24.2 mo</td><td class="num">30.8 mo</td><td class="num">&minus;6.6 mo (&minus;21.4%)</td><td class="num">7.9&times;10⁻²⁶</td><td><span class="tag sig">significant</span></td></tr>
+        <tr><td class="factor">age</td><td class="num">46.4</td><td class="num">45.9</td><td class="num">+0.6 (+1.2%)</td><td class="num">0.31</td><td><span class="tag ns">n.s.</span></td></tr>
+        <tr><td class="factor">contract_type</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">9.9&ndash;10.3% range</td><td class="num">0.83</td><td><span class="tag ns">n.s.</span></td></tr>
+        <tr><td class="factor">gender</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">10.1&ndash;10.3% range</td><td class="num">0.76</td><td><span class="tag ns">n.s.</span></td></tr>
+        <tr><td class="factor">city</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">9.1&ndash;11.1% range</td><td class="num">0.58</td><td><span class="tag ns">n.s.</span></td></tr>
+        <tr><td class="factor">country</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">9.2&ndash;11.5% range</td><td class="num">0.43</td><td><span class="tag ns">n.s.</span></td></tr>
+        <tr><td class="factor">signup_channel</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">9.9&ndash;11.2% range</td><td class="num">0.28</td><td><span class="tag ns">n.s.</span></td></tr>
+        <tr><td class="factor">customer_segment</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">9.4&ndash;10.9% range</td><td class="num">0.26</td><td><span class="tag ns">n.s.</span></td></tr>
+      </table>
+      </div>
+    </div>
+
+    <div class="category">
+      <div class="category-head"><h3>Product Usage</h3><span class="category-verdict">2 of 6 significant</span></div>
+      <div class="category-cols">monthly_logins &middot; weekly_active_days &middot; avg_session_time &middot; features_used &middot; usage_growth_rate &middot; last_login_days_ago</div>
+      <div class="table-wrap">
+      <table>
+        <tr><th>Factor</th><th class="num">Churned</th><th class="num">Retained</th><th class="num">Difference</th><th class="num">p-value</th><th>Result</th></tr>
+        <tr><td class="factor">monthly_logins</td><td class="num">16.8</td><td class="num">20.0</td><td class="num">&minus;3.2 (&minus;16.0%)</td><td class="num">8.0&times;10⁻¹⁹</td><td><span class="tag sig">significant</span></td></tr>
+        <tr><td class="factor">last_login_days_ago</td><td class="num">10.6 d</td><td class="num">9.4 d</td><td class="num">+1.2 d (+12.8%)</td><td class="num">1.4&times;10⁻³</td><td><span class="tag sig">significant</span></td></tr>
+        <tr><td class="factor">weekly_active_days</td><td class="num">3.42</td><td class="num">3.49</td><td class="num">&minus;0.07 (&minus;1.9%)</td><td class="num">0.38</td><td><span class="tag ns">n.s.</span></td></tr>
+        <tr><td class="factor">avg_session_time</td><td class="num">15.09</td><td class="num">15.20</td><td class="num">&minus;0.10 (&minus;0.7%)</td><td class="num">0.63</td><td><span class="tag ns">n.s.</span></td></tr>
+        <tr><td class="factor">features_used</td><td class="num">5.03</td><td class="num">4.99</td><td class="num">+0.04 (+0.8%)</td><td class="num">0.59</td><td><span class="tag ns">n.s.</span></td></tr>
+        <tr><td class="factor">usage_growth_rate</td><td class="num">0.022</td><td class="num">0.019</td><td class="num">+0.003 (+13.6%)</td><td class="num">0.59</td><td><span class="tag ns">n.s.</span></td></tr>
+      </table>
+      </div>
+    </div>
+
+    <div class="category">
+      <div class="category-head"><h3>Billing &amp; Payment</h3><span class="category-verdict">2 of 6 significant</span></div>
+      <div class="category-cols">monthly_fee &middot; total_revenue &middot; payment_method &middot; payment_failures &middot; discount_applied &middot; price_increase_last_3m</div>
+      <div class="table-wrap">
+      <table>
+        <tr><th>Factor</th><th class="num">Churned</th><th class="num">Retained</th><th class="num">Difference</th><th class="num">p-value</th><th>Result</th></tr>
+        <tr><td class="factor">total_revenue</td><td class="num">$844.90</td><td class="num">$1,081.14</td><td class="num">&minus;$236.24 (&minus;21.9%)</td><td class="num">6.3&times;10⁻¹³</td><td><span class="tag sig">significant</span></td></tr>
+        <tr><td class="factor">payment_failures</td><td class="num">0.74</td><td class="num">0.47</td><td class="num">+0.26 (+55.8%)</td><td class="num">2.4&times;10⁻¹⁹</td><td><span class="tag sig">significant</span></td></tr>
+        <tr><td class="factor">monthly_fee</td><td class="num">$34.57</td><td class="num">$34.97</td><td class="num">&minus;$0.40 (&minus;1.1%)</td><td class="num">0.61</td><td><span class="tag ns">n.s.</span></td></tr>
+        <tr><td class="factor">payment_method</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">9.9&ndash;10.4% range</td><td class="num">0.76</td><td><span class="tag ns">n.s.</span></td></tr>
+        <tr><td class="factor">discount_applied</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">9.6&ndash;10.5% range</td><td class="num">0.20</td><td><span class="tag ns">n.s.</span></td></tr>
+        <tr><td class="factor">price_increase_last_3m</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">10.2&ndash;10.4% range</td><td class="num">0.81</td><td><span class="tag ns">n.s.</span></td></tr>
+      </table>
+      </div>
+    </div>
+
+    <div class="category">
+      <div class="category-head"><h3>Customer Support</h3><span class="category-verdict">1 of 5 significant</span></div>
+      <div class="category-cols">support_tickets &middot; avg_resolution_time &middot; complaint_type_clean &middot; csat_score &middot; escalations</div>
+      <div class="table-wrap">
+      <table>
+        <tr><th>Factor</th><th class="num">Churned</th><th class="num">Retained</th><th class="num">Difference</th><th class="num">p-value</th><th>Result</th></tr>
+        <tr><td class="factor">csat_score</td><td class="num">3.03 / 5</td><td class="num">3.54 / 5</td><td class="num">&minus;0.51 (&minus;14.4%)</td><td class="num">1.2&times;10⁻⁴¹</td><td><span class="tag sig">significant</span></td></tr>
+        <tr><td class="factor">escalations</td><td class="num">0.310</td><td class="num">0.292</td><td class="num">+0.017 (+5.9%)</td><td class="num">0.35</td><td><span class="tag ns">n.s.</span></td></tr>
+        <tr><td class="factor">support_tickets</td><td class="num">1.208</td><td class="num">1.206</td><td class="num">+0.001 (+0.1%)</td><td class="num">0.98</td><td><span class="tag ns">n.s.</span></td></tr>
+        <tr><td class="factor">avg_resolution_time</td><td class="num">23.68 h</td><td class="num">23.98 h</td><td class="num">&minus;0.30 (&minus;1.3%)</td><td class="num">0.35</td><td><span class="tag ns">n.s.</span></td></tr>
+        <tr><td class="factor">complaint_type_clean</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">10.0&ndash;10.3% range</td><td class="num">0.97</td><td><span class="tag ns">n.s.</span></td></tr>
+      </table>
+      </div>
+    </div>
+
+    <div class="category">
+      <div class="category-head"><h3>Engagement &amp; Feedback</h3><span class="category-verdict">0 of 5 significant</span></div>
+      <div class="category-cols">email_open_rate &middot; marketing_click_rate &middot; nps_score &middot; survey_response &middot; referral_count</div>
+      <div class="table-wrap">
+      <table>
+        <tr><th>Factor</th><th class="num">Churned</th><th class="num">Retained</th><th class="num">Difference</th><th class="num">p-value</th><th>Result</th></tr>
+        <tr><td class="factor">email_open_rate</td><td class="num">50.8%</td><td class="num">49.9%</td><td class="num">+0.9 pt (+1.8%)</td><td class="num">0.24</td><td><span class="tag ns">n.s.</span></td></tr>
+        <tr><td class="factor">nps_score</td><td class="num">19.5</td><td class="num">19.1</td><td class="num">+0.4 (+2.0%)</td><td class="num">0.76</td><td><span class="tag ns">n.s.</span></td></tr>
+        <tr><td class="factor">referral_count</td><td class="num">0.971</td><td class="num">0.995</td><td class="num">&minus;0.024 (&minus;2.4%)</td><td class="num">0.46</td><td><span class="tag ns">n.s.</span></td></tr>
+        <tr><td class="factor">marketing_click_rate</td><td class="num">25.3%</td><td class="num">25.4%</td><td class="num">&minus;0.1 pt (&minus;0.4%)</td><td class="num">0.84</td><td><span class="tag ns">n.s.</span></td></tr>
+        <tr><td class="factor">survey_response</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">9.7&ndash;11.1% range</td><td class="num">0.25</td><td><span class="tag ns">n.s.</span></td></tr>
+      </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="section-head"><span class="section-num">03</span><h2>The five significant drivers, compared</h2></div>
+    <p class="lede">Ranked by strength of evidence (left) alongside how large the gap actually is (right). Strength and size don't always agree &mdash; <code>payment_failures</code> has the biggest percentage gap but isn't the most statistically certain; <code>csat_score</code> is both.</p>
+
+    <div class="chart-card">
+      <div class="chart-title">Churn drivers with p &lt; 0.05</div>
+      <div class="chart-sub">n = 10,000 &middot; Welch's t-test, unequal variance</div>
+      <div class="chart-grid">
+        <div>
+          <div class="panel-label">Statistical significance &mdash; &minus;log&#8321;&#8320;(p)</div>
+          <div style="position:relative; padding-top:14px;">
+            <div class="bar-row"><span class="label">csat_score</span><div class="bar-track"><div class="fill left" style="left:0; width:97.5%;"></div><div class="p05-line" style="left:6.81%;"></div><div class="p05-label" style="left:6.81%;">p=.05</div></div><span class="value">40.9</span></div>
+            <div class="bar-row"><span class="label">tenure_months</span><div class="bar-track"><div class="fill left" style="left:0; width:59.8%;"></div></div><span class="value">25.1</span></div>
+            <div class="bar-row"><span class="label">payment_failures</span><div class="bar-track"><div class="fill left" style="left:0; width:44.3%;"></div></div><span class="value">18.6</span></div>
+            <div class="bar-row"><span class="label">monthly_logins</span><div class="bar-track"><div class="fill left" style="left:0; width:43.1%;"></div></div><span class="value">18.1</span></div>
+            <div class="bar-row"><span class="label">last_login_days_ago</span><div class="bar-track"><div class="fill left" style="left:0; width:6.8%;"></div></div><span class="value">2.9</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="panel-label">Effect size &mdash; % difference, churned vs. retained</div>
+          <div style="position:relative; padding-top:14px;">
+            <div class="bar-row"><span class="label">csat_score</span><div class="bar-track"><div class="zero" style="left:33.3%;"></div><div class="fill right" style="left:17.33%; width:16.00%;"></div></div><span class="value">&minus;14.4%</span></div>
+            <div class="bar-row"><span class="label">tenure_months</span><div class="bar-track"><div class="zero" style="left:33.3%;"></div><div class="fill right" style="left:9.56%; width:23.77%;"></div></div><span class="value">&minus;21.4%</span></div>
+            <div class="bar-row"><span class="label">payment_failures</span><div class="bar-track"><div class="zero" style="left:33.3%;"></div><div class="fill left" style="left:33.33%; width:62.00%;"></div></div><span class="value">+55.8%</span></div>
+            <div class="bar-row"><span class="label">monthly_logins</span><div class="bar-track"><div class="zero" style="left:33.3%;"></div><div class="fill right" style="left:15.56%; width:17.77%;"></div></div><span class="value">&minus;16.0%</span></div>
+            <div class="bar-row"><span class="label">last_login_days_ago</span><div class="bar-track"><div class="zero" style="left:33.3%;"></div><div class="fill left" style="left:33.33%; width:14.23%;"></div></div><span class="value">+12.8%</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="chart-foot">Left panel: longer bars = stronger statistical evidence, not bigger effect. Right panel: bars grow from zero in either direction; sign shows which group scores higher, not whether that's good news. <code>total_revenue</code> (&minus;21.9%, p=6.3&times;10⁻¹³) is also significant but excluded here &mdash; see &sect;05, it's mechanically tied to tenure rather than an independent driver.</div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="section-head"><span class="section-num">04</span><h2>What csat_score can and can't tell us</h2></div>
+    <p class="lede">The word "outcome" was initially used to describe this finding, which implies csat_score measures satisfaction with a specific resolved support case. That's not supported by what's actually documented.</p>
+    <div class="callout">
+      <p><b>What we actually know:</b> the dataset's only documentation is a top-level feature-category description that places <code>csat_score</code> inside a bucket labeled "Customer Support: tickets, resolution time, CSAT, complaints." There is no field-level definition of what triggers the score or when it's collected &mdash; e.g. a post-ticket survey vs. a periodic relationship check-in.</p>
+      <p><b>Revised claim:</b> customers with lower <em>overall</em> satisfaction are more likely to churn. We cannot say dissatisfaction with a specific support resolution drives churn &mdash; that would require confirming csat_score is captured per-ticket, which the source data doesn't establish.</p>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="section-head"><span class="section-num">05</span><h2>Next: a multivariate model</h2></div>
+    <p class="lede">Everything above is univariate &mdash; each factor was tested against churn on its own, so none of it separates a real independent driver from a factor that just moves alongside one. Two relationships in this dataset make that gap worth closing before acting on the findings:</p>
+    <div class="drivers-list">
+      <div class="driver-item"><span class="driver-rank">&rarr;</span><div><b>tenure_months &harr; total_revenue.</b> <span class="desc">Revenue accrues over the life of the account, so shorter tenure mechanically produces lower lifetime revenue. total_revenue's &minus;21.9% gap may be almost entirely explained by tenure rather than adding independent signal.</span></div><div></div></div>
+      <div class="driver-item"><span class="driver-rank">&rarr;</span><div><b>monthly_logins &harr; last_login_days_ago.</b> <span class="desc">Frequency and recency of login are two views of the same underlying engagement behavior and are likely to be strongly correlated with each other &mdash; a model may need to pick one or combine them rather than treat both as independent.</span></div><div></div></div>
+      <div class="driver-item"><span class="driver-rank">&rarr;</span><div><b>payment_failures &harr; csat_score.</b> <span class="desc">Billing friction plausibly depresses satisfaction (or the reverse); worth testing whether one factor's effect survives once the other is in the model.</span></div><div></div></div>
+    </div>
+    <p style="margin-top:18px;">Recommended next step: a logistic regression of <code>churn</code> on the five significant factors plus <code>total_revenue</code>, with variance inflation factors (VIF) checked before trusting any individual coefficient. If VIF flags the tenure/revenue or login-frequency/recency pairs, drop or combine the redundant one rather than reporting both as independent drivers. An interaction term for <code>tenure_months &times; monthly_logins</code> is also worth testing &mdash; a newer customer with low logins may be a materially different risk than a long-tenured one with a recent dip.</p>
+  </section>
+
+  <section class="block">
+    <div class="section-head"><span class="section-num">06</span><h2>Reproducing this analysis</h2></div>
+    <p class="lede">The full pipeline &mdash; range checks, quality assessment, cleaning, all five category comparisons, and this report's chart &mdash; is captured in a standalone script alongside the dataset:</p>
+    <ul class="decision-list">
+      <li><b><code>churn_analysis.py</code></b> reads <code>customer_churn_business_dataset.csv</code> and runs end to end with no chat context required &mdash; only pandas, scipy, and matplotlib.</li>
+      <li><b><code>customer_churn_business_dataset_cleaned.csv</code></b> is regenerated by the script (35 columns: the original 32 plus <code>complaint_type_clean</code> and the two mismatch flags).</li>
+      <li><b><code>churn_drivers_chart.png</code></b> is regenerated by the script as a static version of the &sect;03 chart above, for use outside this report.</li>
+    </ul>
+  </section>
+
+  <footer>
+    <span>customer_churn_business_dataset.csv &middot; 10,000 rows &middot; 32 raw columns</span>
+    <span>Phase 6 of 6</span>
+  </footer>
+
+</div>
