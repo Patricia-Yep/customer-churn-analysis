@@ -18,7 +18,7 @@ Checked data quality: ranges, blanks, duplicates, contradictory records; cleaned
 
 4.  **Low usage is a weaker warning sign.** Customers with 13 or fewer monthly logins churned at 14.3%, about 1.6 times the 8–9% rate of more active customers.
 
-5.   **Inactive customers are at risk.**  Customers with no login in over 30 days churned at 19.5%, about twice the 10% rate of others.**  At 426 customers, this is the smallest at-risk group, so it ranks below the other warning signs.
+5.   **Inactive customers are at risk.**  Customers with no login in over 30 days churned at 19.5%, about twice the 10% rate of others.  At 426 customers, this is the smallest at-risk group, so it ranks below the other warning signs.
 
 6.  **Churn costs about $35,300 a month.** That's 10.1% of monthly revenue, an estimated $424,000 a year.
 
@@ -30,7 +30,7 @@ Checked data quality: ranges, blanks, duplicates, contradictory records; cleaned
 
 2.  **Ask why when satisfaction is low.**  The analysis shows CSAT scores of one or two churn at about 3.5 times the rate of customers with higher scores.  When a customer rates 1 or 2, ask a short follow-up question about what went wrong, so the company can identify and fix the causes.
 
-3.  **Prevent failed payments.**  Failed payments may be due to expired credit cards.  Setting up automatic customer reminders prior to card expiration dates could help prevent failed payment problems from arising and hence reduce failed payments.  Create automatic alerts to staff after a second failed payment to follow up promptly, may reduce churn.
+3.  **Prevent failed payments.**  Failed payments may be due to expired credit cards.  Setting up automatic customer reminders prior to card expiration dates could help prevent failed payment problems from arising and hence reduce failed payments.  Automatic alerts to staff after a second failed payment, so they can follow up promptly, may reduce churn.
 
 4.  **Re-engage low-usage customers.**  Low login activity is also associated with churned customers (14.3%) but is the largest group affected (2,739 customers).  Thirteen or fewer logins in a month may trigger emails to be sent to customers showing different features the customer may not know about, or emails with helpful tips or training could encourage customers and engage them to use the services.
 
@@ -50,7 +50,7 @@ Also, I noticed some payment-failure groups were too small to trust (as few as 3
 
 ## Data and decisions
 
-Synthetic Kaggle dataset of 10,000 customers; blank complaint types kept and flagged rather than guessed; no rows dropped; small groups combined (2+ failed payments); total revenue (roughly tenure_months x monthly_fee) because it reflects tenure.
+Synthetic Kaggle dataset of 10,000 customers; blank complaint types kept and flagged rather than guessed; no rows dropped; small groups combined (2+ failed payments); total revenue (roughly tenure_months x monthly_fee) left out as a driver because it reflects tenure.
 
 Some relationships expected in real data are missing (for example, monthly logins and days since last login are uncorrelated), so findings demonstrate method rather than real-world conclusions.
 
